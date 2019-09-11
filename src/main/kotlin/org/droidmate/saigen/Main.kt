@@ -8,6 +8,7 @@ import org.droidmate.explorationModel.factory.DefaultModelProvider
 import org.droidmate.saigen.storage.DictionaryProvider
 import org.droidmate.saigen.storage.LinkProvider
 import org.droidmate.saigen.storage.Storage
+import org.droidmate.saigen.utils.LabelMatcher
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 import java.util.UUID
@@ -125,6 +126,31 @@ class Main {
                 ("Labels for which we could not get any results: " + SaigenMF.allQueriedLabels + "\n").toByteArray(),
                 StandardOpenOption.APPEND
             )
+
+            println("Writing list of widget uid and their associated results in widgets.txt")
+            val widgetsUIDLabelMap = mutableMapOf<UUID, Pair<String, List<String>>>()
+            SaigenMF.concreteIDMap.forEach { (key, value) ->
+                if (!widgetsUIDLabelMap.containsKey(key.uid)) {
+                    SaigenMF.queryMap.forEach { (key2, value2) ->
+                        if (key2.second == LabelMatcher.cachedLabel(key.uid)) {
+                            widgetsUIDLabelMap[key.uid] = Pair(key2.second, value2)
+                        }
+                    }
+                }
+            }
+
+            val widgetsDebugFile = statisticsDir.resolve("widgets.txt")
+            Files.deleteIfExists(widgetsDebugFile)
+            Files.createFile(widgetsDebugFile)
+
+            Files.write(widgetsDebugFile, "Widgets debug information, listing widget uuids and potential inputs:\n".toByteArray(), StandardOpenOption.APPEND)
+            widgetsUIDLabelMap.forEach { w ->
+                Files.write(
+                    widgetsDebugFile,
+                    (w.key.toString() + " (" + w.value.first + ") = {" + w.value.second.joinToString(",") + "}\n").toByteArray(),
+                    StandardOpenOption.APPEND
+                )
+            }
         }
 
         private fun getCAMs(): List<CAM> {
