@@ -14,11 +14,7 @@ import org.droidmate.explorationModel.ExplorationTrace
 import org.droidmate.explorationModel.interaction.Interaction
 import org.droidmate.explorationModel.interaction.State
 import org.droidmate.explorationModel.interaction.Widget
-import org.droidmate.saigen.storage.DictionaryProvider
-import org.droidmate.saigen.storage.LinkProvider
 import org.droidmate.saigen.storage.QueryResult
-import org.droidmate.saigen.storage.Storage
-import org.droidmate.saigen.utils.LabelMatcher
 import org.droidmate.saigen.utils.getSynonyms
 import org.droidmate.saigen.utils.isVisibleDataWidget
 import org.slf4j.Logger
@@ -32,6 +28,9 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.io.File
 import java.io.IOException
+import org.droidmate.saigen.Lib.Companion.extractWidgetsAndLabels // = return LabelMatcher.getLabels(state)
+import org.droidmate.saigen.Lib.Companion.getInputsForLabels // = return storage.query(labels)
+import org.droidmate.saigen.Lib.Companion.cachedLabel // = return LabelMatcher.cachedLabel(widget)
 
 class SaigenMF : ModelFeature() {
     companion object {
@@ -59,20 +58,6 @@ class SaigenMF : ModelFeature() {
 
     override val coroutineContext: CoroutineContext = CoroutineName("SaigenMF") + Job()
 
-    // private val storage = Storage(sortedSetOf(LinkProvider()))
-    private val storage = Storage(
-        sortedSetOf(
-            LinkProvider(),
-            DictionaryProvider(
-                mapOf(
-                    "user" to listOf("Johnny1999", "Emmmma95"),
-                    "password" to listOf("sec", "rets"),
-                    "url" to listOf("http://google.com")
-                )
-            )
-        )
-    )
-
     /**
      * Initialized on the onAppExplorationStarted
      */
@@ -90,7 +75,7 @@ class SaigenMF : ModelFeature() {
     private var lastQuery: Deferred<List<QueryResult>>? = null
 
     private fun Widget.isBlacklisted(): Boolean {
-        val label = LabelMatcher.cachedLabel(this)
+        val label = cachedLabel(this)
 
         return label.isEmpty() || // no cachedLabel for the widget
                 blacklistedWords.contains(label) // in the blacklist
@@ -158,7 +143,7 @@ class SaigenMF : ModelFeature() {
 
         // Add unused terms to the blacklist
         val unusedLabels = dataWidgets
-            .map { LabelMatcher.cachedLabel(it) }
+            .map { cachedLabel(it) }
             .filterNot { queryLabels.contains(it) }
             .flatMap { it.getSynonyms() }
 
@@ -177,7 +162,8 @@ class SaigenMF : ModelFeature() {
             .map {
                 Pair(
                     it,
-                    queryResult.firstOrNull { p -> p.label == LabelMatcher.cachedLabel(it) }?.values.orEmpty()
+                    // queryResult.firstOrNull { p -> p.label == LabelMatcher.cachedLabel(it) }?.values.orEmpty()
+                    queryResult.firstOrNull { p -> p.label == cachedLabel(it) }?.values.orEmpty()
                 )
             }
             .toMap()
@@ -244,8 +230,9 @@ class SaigenMF : ModelFeature() {
     ) {
         async { drawOnScreenshots(interactions) }
 
-        val matchedWidgets = LabelMatcher.getLabels(newState)
+        // log.debug("library: STATE: " + newState + "\n" + "return value: " + extractWidgetsAndLabels(newState))
 
+        val matchedWidgets = extractWidgetsAndLabels(newState)
         if (matchedWidgets.isEmpty())
             return
 
@@ -261,7 +248,9 @@ class SaigenMF : ModelFeature() {
 
         nouns.map { allQueriedLabels.add(it) }
 
+        // log.debug("library: inputs for labels: " + nouns + "\n" + "return value: " + getInputsForLabels(nouns))
+
         // Populate the cache while dm processes
-        this.lastQuery = async { storage.query(nouns) }
+        this.lastQuery = async { getInputsForLabels(nouns) }
     }
 }
