@@ -7,6 +7,7 @@ import org.droidmate.explorationModel.factory.DefaultModelProvider
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 import java.util.UUID
+import org.droidmate.saigen.Lib.Companion.cachedLabel // = return LabelMatcher.cachedLabel(widget)
 
 /**
  * Example run config:
@@ -120,7 +121,7 @@ class Main {
             SaigenMF.concreteIDMap.forEach { (key, value) ->
                 if (!widgetsUIDLabelMap.containsKey(key.uid)) {
                     SaigenMF.queryMap.forEach { (key2, value2) ->
-                        if (key2.second == LabelMatcher.cachedLabel(key.uid)) {
+                        if (key2.second == cachedLabel(key.uid)) {
                             widgetsUIDLabelMap[key.uid] = Pair(key2.second, value2)
                         }
                     }
