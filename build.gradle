@@ -1,5 +1,5 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.3.21'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.50'//21'
 }
 
 group 'test'
@@ -59,13 +59,23 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.0'
 
     //compile 'org.droidmate:droidmate-2:+'
-    compile "com.github.uds-se.droidmate:droidmate-2:2.0.0"
+
+    implementation 'com.github.leonbett:saigen-lib:master-SNAPSHOT'
+    // implementation 'com.github.leonbett:saigen-lib:dev-SNAPSHOT'
+
+
+    // REPLACED compile "com.github.uds-se.droidmate:droidmate-2:2.0.0"
+    compile("com.github.hotzkow:explorationModel")
+    compile("com.github.uds-se.droidmate:droidmate-2:master-SNAPSHOT")
+
     compile "com.github.uds-se:droidmate-coverage:1.4.1-SNAPSHOT"
     compile "ca.mcgill.sable:soot:3.3.0-SNAPSHOT"
     compile ("de.tud.sse:soot-infoflow-android:2.7.2-SNAPSHOT") {
         // FlowDroid uses an older version of Soot, let's use the newest one!
         exclude group: 'ca.mcgill.sable', module: 'soot'
     }
+
+    // compile fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation 'org.json:json:20160212'
 

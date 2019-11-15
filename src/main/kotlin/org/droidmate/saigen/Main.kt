@@ -3,15 +3,11 @@ package org.droidmate.saigen
 import kotlinx.coroutines.runBlocking
 import org.droidmate.api.ExplorationAPI
 import org.droidmate.configuration.ConfigurationBuilder
-import org.droidmate.configuration.ConfigurationWrapper
 import org.droidmate.explorationModel.factory.DefaultModelProvider
-import org.droidmate.saigen.storage.DictionaryProvider
-import org.droidmate.saigen.storage.LinkProvider
-import org.droidmate.saigen.storage.Storage
-import org.droidmate.saigen.utils.LabelMatcher
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 import java.util.UUID
+import org.droidmate.saigen.Lib.Companion.cachedLabel // = return LabelMatcher.cachedLabel(widget)
 
 /**
  * Example run config:
@@ -24,11 +20,7 @@ class Main {
         @JvmStatic
         fun main(args: Array<String>) {
             runBlocking {
-                // debug()
-                // System.exit(0)
                 val cfg = ConfigurationBuilder().build(args)
-                // val builder = ExploreCommandBuilder.fromConfig(cfg)
-                // ExplorationAPI.explore(cfg, builder)
 
                 /** *
                  * To get the coverage, app should first be instrumented
@@ -41,7 +33,7 @@ class Main {
                 System.exit(0)*/
 
                 val commandBuilder = ExplorationAPI.buildFromConfig(cfg)
-                    // Add custom strategies
+                // Add custom strategies
                 commandBuilder.withStrategy(SaigenRandom(commandBuilder.getNextSelectorPriority()))
                     .withStrategy(SaigenCAM(commandBuilder.getNextSelectorPriority(), emptyList()))
 
@@ -51,12 +43,12 @@ class Main {
                     modelProvider = DefaultModelProvider()
                 )
 
-                writeStatisticsToFile(cfg)
+                writeStatisticsToFile()
             }
         }
 
         // This method must be executed after SaigenMF.context was initialized. Kinda hacky but a good way to get baseDir.
-        private fun writeStatisticsToFile(cfg: ConfigurationWrapper) {
+        private fun writeStatisticsToFile() {
             if (!SaigenMF.isContextInitialized()) {
                 return
             }
@@ -99,9 +91,6 @@ class Main {
                 ("#unique input fields filled automatically (DBPedia, DictionaryProvider): " + uniqueWidgets.filterValues { it == 1 }.size + "\n").toByteArray(),
                 StandardOpenOption.APPEND
             )
-            // Files.write(statisticsFile, ("#unique input fields selected (fields that were filled by any method): " + SaigenMF.uidMap.filterValues { it.first==true  }.size + "\n").toByteArray(), StandardOpenOption.APPEND)
-            // Files.write(statisticsFile, ("#unique input fields filled via DictProviders: ").toByteArray(), StandardOpenOption.APPEND)
-            // Files.write(statisticsFile, ("#unique input fields filled randomly").toByteArray(), StandardOpenOption.APPEND)
 
             println("Writing querydebug.txt")
             val queryDebugFile = statisticsDir.resolve("querydebug.txt")
@@ -132,7 +121,7 @@ class Main {
             SaigenMF.concreteIDMap.forEach { (key, value) ->
                 if (!widgetsUIDLabelMap.containsKey(key.uid)) {
                     SaigenMF.queryMap.forEach { (key2, value2) ->
-                        if (key2.second == LabelMatcher.cachedLabel(key.uid)) {
+                        if (key2.second == cachedLabel(key.uid)) {
                             widgetsUIDLabelMap[key.uid] = Pair(key2.second, value2)
                         }
                     }
@@ -152,55 +141,5 @@ class Main {
                 )
             }
         }
-
-        private fun getCAMs(): List<CAM> {
-            // TODO Pending...
-            // val loginCam = CAM(listOf("username", "password"), listOf("log in"))
-            return emptyList()
-        }
-
-        private fun debug() {
-            val link = Storage(
-                sortedSetOf(
-                    LinkProvider(),
-                    DictionaryProvider(mapOf("name" to listOf("first name", "second name")))
-                )
-            )
-
-            val r = link.query(listOf("address", "name", "city", "email", "phone", "car"))
-
-            r.forEach { result ->
-                println("GroupId: ${result.queryId}\tLabel: ${result.label}\tValues: ${result.values.joinToString(" | ")}")
-            }
-        }
-
-        /* Wordnik dict
-
-        System.setProperty("WORDNIK_API_KEY", "72d81865c31c2912fd866055fc20c53890e8ff1b85a019f3d")
-
-            val status = AccountApi.apiTokenStatus()
-            if (status.isValid) {
-                println("API key is valid.")
-            } else {
-                println("API key is invalid!")
-                System.exit(1)
-            }
-
-            // get a list of definitions for a word
-            val def = WordApi.definitions("siren")
-            println("Found " + def.size + " definitions.")
-
-            var i = 1
-            for (d in def) {
-                println(i++.toString() + ") " + d.partOfSpeech + ": " + d.text)
-            }
-
-            val syn = WordApi.related("siren", true, setOf(Knicker.RelationshipType.synonym), 50)
-            println("Found " + syn.size + " synonyms.")
-            i = 1
-            for (d in syn.first().words) {
-                println(i++.toString() + ") " + d)
-            }
-         */
     }
 }
