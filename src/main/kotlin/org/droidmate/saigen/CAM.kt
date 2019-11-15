@@ -2,18 +2,18 @@ package org.droidmate.saigen
 
 import org.droidmate.explorationModel.interaction.State
 import org.droidmate.explorationModel.interaction.Widget
-import org.droidmate.saigen.utils.LabelMatcher
 import org.droidmate.saigen.utils.NLP
 import org.droidmate.saigen.utils.nouns
 import java.nio.file.Files
 import java.nio.file.Path
+import org.droidmate.saigen.Lib.Companion.extractWidgetsAndLabels // = return LabelMatcher.getLabels(state)
 
 /**
  * Concept to action mapping
  */
 data class CAM(private val sourceConcepts: List<String>, private val targetConcepts: List<String>) {
     private fun matchesSources(state: State<*>): Boolean {
-        val widgetLabelMap = LabelMatcher.getLabels(state)
+        val widgetLabelMap = extractWidgetsAndLabels(state)
 
         return widgetLabelMap.values
             .all { this.sourceConcepts.contains(it) }

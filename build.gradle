@@ -59,9 +59,12 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.0'
 
     //compile 'org.droidmate:droidmate-2:+'
+
+    implementation "com.github.leonbett:saigen-lib:master-SNAPSHOT"
     implementation "com.github.uds-se.droidmate:droidmate-2:master-SNAPSHOT"
     implementation "com.github.uds-se:droidmate-common:1.4.2-SNAPSHOT"
     implementation "com.github.uds-se:droidmate-coverage:1.4.2-SNAPSHOT"
+
     compile "ca.mcgill.sable:soot:3.3.0-SNAPSHOT"
     compile ("de.tud.sse:soot-infoflow-android:2.7.2-SNAPSHOT") {
         // FlowDroid uses an older version of Soot, let's use the newest one!
